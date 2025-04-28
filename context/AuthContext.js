@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useMemo } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -19,22 +19,40 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     console.log("Setting up auth state listener");
+    
+    // Check if auth is initialized
+    if (!auth) {
+      console.error("Auth is not initialized");
+      setLoading(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log("Auth state changed:", user ? "User logged in" : "No user");
-      if (user) {
-        console.log("User details:", user.email);
-        setUser(user);
-        await AsyncStorage.setItem("user", JSON.stringify(user));
-      } else {
-        setUser(null);
-        await AsyncStorage.removeItem("user");
+      
+      try {
+        if (user) {
+          console.log("User details:", user.email);
+          setUser(user);
+          await AsyncStorage.setItem("user", JSON.stringify(user));
+        } else {
+          setUser(null);
+          await AsyncStorage.removeItem("user");
+        }
+      } catch (error) {
+        console.error("Error handling auth state change:", error);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("Auth state observer error:", error);
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
+  // Define functions outside of the context value to prevent recreating them on every render
   const login = async (email, password) => {
     console.log("Login function called with email:", email);
     try {
@@ -106,17 +124,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Memoize the context value to prevent unnecessary rerenders
+  const value = useMemo(() => ({
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    updateUserProfile,
+  }), [user, loading]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        updateUserProfile,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

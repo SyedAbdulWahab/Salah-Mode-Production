@@ -1,26 +1,30 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Slot, useRouter, useSegments } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-import { AuthProvider } from '../context/AuthContext';
-import { UserSettingsProvider } from '../context/UserSettingsContext';
-import { MosqueProvider } from '../context/MosqueContext';
-import { useAuth } from '../context/AuthContext';
-import { useUserSettings } from '../context/UserSettingsContext';
-import { useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Slot, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef } from "react";
+import "react-native-reanimated";
+import { AuthProvider } from "../context/AuthContext";
+import { UserSettingsProvider } from "../context/UserSettingsContext";
+import { MosqueProvider } from "../context/MosqueContext";
+import { useAuth } from "../context/AuthContext";
+import { useUserSettings } from "../context/UserSettingsContext";
+import { useColorScheme } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  
+
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -39,7 +43,9 @@ export default function RootLayout() {
       <AuthProvider>
         <UserSettingsProvider>
           <MosqueProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+            >
               <RootLayoutNav />
             </ThemeProvider>
           </MosqueProvider>
@@ -54,25 +60,47 @@ function RootLayoutNav() {
   const { loading: settingsLoading } = useUserSettings();
   const router = useRouter();
   const segments = useSegments();
-  
-  // Simplified navigation effect
+
+  const hasNavigated = useRef(false);
+
+  // Reset navigation flag when dependencies change
+  useEffect(() => {
+    hasNavigated.current = false;
+  }, [user, userLoading, settingsLoading]);
+
+  // Simplified navigation effect with better guards
   useEffect(() => {
     // Don't navigate if still loading
     if (userLoading || settingsLoading) return;
-    
-    const inAuthGroup = segments[0] === '(auth)';
-    const inOnboardingGroup = segments[0] === '(onboarding)';
-    const isOnboardingScreen = segments[0] === 'onboarding';
-    
-    // Handle navigation based on auth state
-    if (!user && !inAuthGroup && !inOnboardingGroup && !isOnboardingScreen && segments[0] !== '') {
+
+    // Don't navigate if we've already navigated in this render cycle
+    if (hasNavigated.current) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const inOnboardingGroup = segments[0] === "(onboarding)";
+    const isOnboardingScreen = segments[0] === "onboarding";
+    const isWelcomeScreen = segments[0] === "";
+    const isTabsGroup = segments[0] === "(tabs)";
+
+    // Handle navigation based on auth state with more specific conditions
+    if (
+      !user &&
+      !inAuthGroup &&
+      !inOnboardingGroup &&
+      !isOnboardingScreen &&
+      !isWelcomeScreen
+    ) {
       // User not authenticated and not on welcome, auth, or onboarding screens
-      router.replace('/');
-    } else if (user && (inAuthGroup || segments[0] === '')) {
+      console.log("Not authenticated, redirecting to welcome screen");
+      hasNavigated.current = true;
+      router.replace("/login");
+    } else if (user && (inAuthGroup || isWelcomeScreen) && !isTabsGroup) {
       // User is authenticated but on auth or welcome screen
-      router.replace('/(tabs)');
+      console.log("Authenticated, redirecting to tabs");
+      hasNavigated.current = true;
+      router.replace("/(tabs)");
     }
-  }, [user, userLoading, settingsLoading, segments]);
+  }, [user, userLoading, settingsLoading, segments, router]);
 
   return (
     <>

@@ -80,11 +80,14 @@ function CustomTabBar({ state, descriptors, navigation }) {
 }
 
 export default function TabsLayout() {
+  // Use useMemo for the screenOptions to prevent recreation on each render
+  const screenOptions = React.useMemo(() => ({
+    headerShown: false,
+  }), []);
+
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-      }}
+      screenOptions={screenOptions}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen
@@ -119,8 +122,7 @@ export default function TabsLayout() {
         name="mosque-search"
         options={{
           title: "Search",
-          // Hide this screen from the tab bar
-          href: null,
+          href: null, // Hide this screen from the tab bar
         }}
       />
     </Tabs>

@@ -80,18 +80,24 @@ const MapScreen = ({ navigation }) => {
   // Add new mosque
   const addMosque = () => {
     setModalVisible(false);
-    // if (!currentLocation || !mosqueName.trim()) {
-    //   Alert.alert(
-    //     "Error",
-    //     "Please enter mosque name and ensure location is available"
-    //   );
+
+    if (!currentLocation) {
+      Alert.alert(
+        "Error",
+        "Current location not available. Please wait for GPS fix or try again."
+      );
+      return;
+    }
+
+    // if (!mosqueName.trim()) {
+    //   Alert.alert("Error", "Please enter a mosque name.");
     //   return;
     // }
 
     const newMosqueRef = ref(database, "mosques/" + Date.now());
 
     set(newMosqueRef, {
-      name: mosqueName,
+    //   name: mosqueName,
       latitude: currentLocation.latitude,
       longitude: currentLocation.longitude,
       createdAt: Date.now(),
