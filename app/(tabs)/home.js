@@ -29,14 +29,14 @@ export default function HomeScreen() {
   };
 
   const handleAddMosque = () => {
-    router.push("/(tabs)/mosque-search");
+    router.push("/(tabs)/MapScreen");
   };
 
   return (
     <View style={styles.container}>
       {/* Background with image */}
       <ImageBackground
-        source={require("../../assets/images/home.png")}
+        source={require("../../assets/images/home.jpg")}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
