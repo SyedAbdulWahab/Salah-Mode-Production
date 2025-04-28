@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "18453196035",
+    "project_id": "salah-mode-e678b",
+    "storage_bucket": "salah-mode-e678b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:18453196035:android:ce9865def0ca325786cd36",
+        "android_client_info": {
+          "package_name": "com.ihasnainbhutta.MyReactNativeApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdM67Eo_FlsCfiAyL3Ds_y0vFPweMucpY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
