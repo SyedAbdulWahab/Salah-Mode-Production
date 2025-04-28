@@ -9,7 +9,7 @@ import {
   Platform,
   ToastAndroid,
 } from "react-native";
-import MapView, { Marker, Circle } from "react-native-maps";
+import MapView, { Marker, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import * as Location from "expo-location";
 import {
@@ -28,6 +28,8 @@ const MapScreen = ({ navigation }) => {
   const [markers, setMarkers] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [userLocationChange, setUserLocationChange] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null); // Track pin drop location
   const [selectedMode, setSelectedMode] = useState(null); // Track selected mode
   const mapRef = useRef(null); // Reference to the MapView
 
@@ -76,6 +78,10 @@ const MapScreen = ({ navigation }) => {
 
     return () => off(mosquesRef, "value", listener);
   }, []);
+  useEffect(() => {
+    // getCurrentLocation();
+    console.log("Current location:", selectedLocation);
+  }, [selectedLocation]);
 
   // Add new mosque
   const addMosque = () => {
@@ -97,9 +103,9 @@ const MapScreen = ({ navigation }) => {
     const newMosqueRef = ref(database, "mosques/" + Date.now());
 
     set(newMosqueRef, {
-    //   name: mosqueName,
-      latitude: currentLocation.latitude,
-      longitude: currentLocation.longitude,
+      //   name: mosqueName,
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
       createdAt: Date.now(),
     })
       .then(() => {
@@ -158,6 +164,26 @@ const MapScreen = ({ navigation }) => {
     fetchLocation();
   }, []); // Empty dependency array ensures it runs only once when the component mounts // Empty dependency array ensures it runs only once when the component mounts
 
+
+    // Fetch mosques in real-time
+    useEffect(() => {
+      const mosquesRef = ref(database, "mosques");
+      const unsubscribe = onValue(mosquesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const mosqueArray = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+          setMosques(mosqueArray);
+        } else {
+          setMosques([]);
+        }
+      });
+  
+      return () => unsubscribe(); // Cleanup listener on unmount
+    }, []);
+
   const handleConfirmLocation = () => {
     setModalVisible(true);
   };
@@ -191,6 +217,13 @@ const MapScreen = ({ navigation }) => {
     }
   };
   const refMap = useRef();
+
+  const handleRegionChange = (region) => {
+    setSelectedLocation({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
+  };
   return (
     <View style={styles.container}>
       <>
@@ -280,9 +313,18 @@ const MapScreen = ({ navigation }) => {
           style={styles.map}
           initialRegion={currentLocation}
           onPress={handleMapPress}
+          onRegionChangeComplete={handleRegionChange}
+          onUserLocationChange={(e) => {
+            // console.log("onUserLocationChange", e.nativeEvent.coordinate);
+            setUserLocationChange(e.nativeEvent.coordinate);
+          }}
+          showsUserLocation={true}
+          provider={PROVIDER_GOOGLE}
+          zoomTapEnabled={true}
+          toolbarEnabled={true}
         >
           {/* Show current location marker */}
-          {currentLocation && (
+          {/* {currentLocation && (
             <Marker
               coordinate={{
                 latitude: currentLocation.latitude,
@@ -290,13 +332,13 @@ const MapScreen = ({ navigation }) => {
               }}
               title="You are here"
             >
-              {/* <FontAwesome5 name="user" size={24} color="blue" /> */}
+         
               <MaterialIcons name="my-location" size={24} color="#0FAD69" />
             </Marker>
-          )}
+          )} */}
 
           {/* Show mosque markers and radius */}
-          {markers.map((marker, index) => (
+          {mosques.map((marker, index) => (
             <React.Fragment key={index}>
               <Marker coordinate={marker} title={`Mosque ${index + 1}`}>
                 <FontAwesome5 name="mosque" size={24} color="#D89C60" />

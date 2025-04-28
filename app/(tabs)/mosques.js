@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useMosque } from "../../context/MosqueContext";
+import { useMosques } from "../../context/MosqueContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function MosquesScreen() {
   const router = useRouter();
-  const { mosques, loading, addMosque, removeMosque } = useMosque();
+  const { mosques, loading, addMosque, removeMosque } = useMosques();
   const [showAddForm, setShowAddForm] = useState(false);
   const params = useLocalSearchParams();
 
